@@ -17,6 +17,7 @@ import axios from 'axios';
 import inicio from './pages/inicio.vue';
 import Table from './pages/Table.vue';
 import TableConsultation from './components/TableConsultation.vue'
+import TableConsultation2 from './components/TableConsultation2.vue'
 
 const app = createApp(App);
 
@@ -31,6 +32,10 @@ const router = createRouter({
     {
       path:'/TableConsultation',
       component: TableConsultation
+    },
+    {
+      path:'/TableConsultation2',
+      component: TableConsultation2
     },
     {
       path: '/table',

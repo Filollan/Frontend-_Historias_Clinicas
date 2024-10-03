@@ -3,9 +3,9 @@
     <Spinner :isActive="isActive"></Spinner>
     
     <!-- Botón para agregar nueva consulta -->
-    <div class="button-container">
+   <!--  <div class="button-container">
       <Button label="Agregar historia clinica" icon="pi pi-plus" @click="abrirModalAgregarConsulta" />
-    </div>
+    </div> -->
 
     <DataTable 
       :paginator="true" 
@@ -20,7 +20,7 @@
         <div class="header-content">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="globalFilterValue" @input="searchConsultation" placeholder="Buscar paciente" />
+            <InputText v-model="globalFilterValue" @input="searchConsultation" placeholder="Buscar Consultas" />
           </span>
         </div>
       </template>
@@ -73,6 +73,7 @@
       <Button label="Verificar Integridad" icon="pi pi-check-circle" @click="verificarIntegridad(consultaSeleccionada.hash)" class="p-button-text" />
       <Button label="Imprimir PDF" icon="pi pi-file-pdf" @click="imprimirPDF" class="p-button-text" />
       <Button label="Enviar WhatsApp" icon="pi pi-whatsapp" @click="shareWhatsApp" class="p-button-text" />
+      <Button label="Cerrar" icon="pi pi-times" @click="cerrarModalVerConsulta" class="p-button-text" />
     </template>
   </Dialog>
 
@@ -159,7 +160,7 @@ import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
-import Spinner from '../components/Spinner.vue';
+import Spinner from './Spinner.vue';
 import jsPDF from 'jspdf';
 
 import * as api from '../helpers/api.js';
@@ -223,19 +224,6 @@ if (!id) {
 };
 
 // Buscar en las consultas
-const searchConsultation = () => {
-  if (!globalFilterValue.value) {
-    filteredConsultations.value = consultas.value; // Si no hay filtro, mostrar todas las consultas
-    return;
-  }
-
-  filteredConsultations.value = consultas.value.filter((consulta) => {
-    // Asegúrate de que el objeto `consulta` y la propiedad `data.patient` existan
-    return consulta?.data?.patient?.toLowerCase().includes(globalFilterValue.value.toLowerCase());
-  });
-};
-
-// Buscar en las consultas
 const findConsulta = async (criterios) => {
   try {
     const response = await fetch('/api/consultas/search', {
@@ -263,6 +251,19 @@ const nuevaConsulta = ref({
   reason_for_consultation: '',
   diagnosis: '',
 });
+
+// Buscar en las consultas
+const searchConsultation = () => {
+  if (!globalFilterValue.value) {
+    filteredConsultations.value = consultas.value; // Si no hay filtro, mostrar todas las consultas
+    return;
+  }
+
+  filteredConsultations.value = consultas.value.filter((consulta) => {
+    // Asegúrate de que el objeto `consulta` y la propiedad `data.patient` existan
+    return consulta?.data?.patient?.toLowerCase().includes(globalFilterValue.value.toLowerCase());
+  });
+};
 
 const abrirModalAgregarConsulta = () => {
   nuevaConsulta.value = {
@@ -311,14 +312,49 @@ const guardarNuevaConsulta = async () => {
 
 // Manejo de los modales
 const abrirModalVerConsulta = (consulta) => {
-  consultaSeleccionada.value = consulta;
+  consultaSeleccionada.value = { ...consulta };
+  console.log('Consulta seleccionada:', consultaSeleccionada.value); // Debugging log
+  mostrarModalVerConsulta.value = true;
+};
 
-  // Asegúrate de que el campo diagnosisHash esté disponible
-  if (!consultaSeleccionada.value.diagnosisHash) {
-    console.warn("La consulta seleccionada no tiene un hash de diagnóstico.");
+const cerrarModalVerConsulta = () => {
+  mostrarModalVerConsulta.value = false;
+};
+
+
+// Montar las consultas al cargar el componente
+onMounted(() => {
+  loadConsultations();
+  findConsulta();
+  searchConsultation();
+});
+
+
+// Eliminar consulta
+const eliminarConsulta = async () => {
+  const consulta = consultaSeleccionada.value;
+  const id = consulta.data?.id || consulta.id || consulta.diagnosisHash; // Ajusta según tu estructura
+
+  console.log('ID de consulta a eliminar:', id);
+
+  if (!id) {
+    console.error('No se encontró el ID de la consulta seleccionada.');
+    alert('Error: No se pudo identificar la consulta a eliminar.');
+    return;
   }
 
-  mostrarModalVerConsulta.value = true;
+  isActive.value = true;
+  try {
+    await api.deleteConsultation(id);
+    await loadConsultations();
+    mostrarModalEliminarConsulta.value = false;
+    alert('Consulta eliminada con éxito.');
+  } catch (error) {
+    console.error('Error al eliminar la consulta:', error);
+    alert('Error al eliminar la consulta. Por favor, inténtalo de nuevo.');
+  } finally {
+    isActive.value = false;
+  }
 };
 
 // Verificar integridad de la consulta usando blockchain
@@ -338,16 +374,6 @@ const verificarIntegridad = async (hash) => {
     console.error('Error al verificar la integridad:', error);
   }
 };
-
-
-// Montar las consultas al cargar el componente
-onMounted(() => {
-  loadConsultations();
-  searchConsultation();
-  findConsulta();
-});
-
-
 
 
 // Funciones para imprimir PDF y enviar WhatsApp

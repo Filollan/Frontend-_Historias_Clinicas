@@ -16,6 +16,10 @@ const routes = [
     path: '/TableConsultation',
     component: TableConsultation
   },
+  {
+    path: '/TableConsultation2',
+    component: TableConsultation2
+  },
  
 ];
 

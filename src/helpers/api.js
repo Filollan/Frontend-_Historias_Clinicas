@@ -94,41 +94,7 @@ export function getConsultations() {
   });
 }
 
-export function getConsultation() {
-  return request({
-    url: `consultations`,
-    method: "get",
-  }).then(response => {
-    console.log(response); // Asegúrate de que la respuesta contiene los datos correctos
-    return response;
-  }).catch(error => {
-    console.error("Error al obtener las consultas:", error);
-  });
-}
 
-export const updateConsultation = async (id, updatedConsultation) => {
-  const response = await fetch(`/api/consultations/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updatedConsultation),
-  });
-  if (!response.ok) {
-    throw new Error('Error actualizando la consulta');
-  }
-  return await response.json();
-};
-
-export const deleteConsultation = async (diagnosisHash) => {
-  const response = await fetch(`/api/consultations/${diagnosisHash}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Error eliminando la consulta');
-  }
-  return await response.json();
-};
 
 const loadConsultations = async () => {
   isActive.value = true;
@@ -145,3 +111,22 @@ const loadConsultations = async () => {
     isActive.value = false;
   }
 };
+
+//consultation
+
+export function searchConsultation(data) {
+  return request({
+    url: "consultations/search",
+    method: "post",
+    data,  // Enviamos los parámetros de búsqueda como parte del cuerpo de la solicitud
+  });
+}
+
+// Verificar integridad de la consulta médica usando el hash
+
+export function verificarIntegridad(hash) {
+  return request({
+    url: `consultations/verificar/${hash}`,
+    method: "get",
+  });
+}
